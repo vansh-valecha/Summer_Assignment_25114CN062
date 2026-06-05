@@ -3,18 +3,29 @@
 int prime(int n)
 {
     int i, isprime = 0;
-    for (i = 2; i * i <= n; i++)
+    if (n < 2)
     {
-        if (n % i == 0)
+        return 0;
+    }
+    else
+    {
+        for (i = 2; i * i <= n; i++)
         {
-            isprime = 1;
-            break;
+            if (n % i == 0)
+            {
+                isprime = 1;
+                break;
+            }
         }
     }
 
     if (isprime == 0)
     {
         return n;
+    }
+    else
+    {
+        return 0;
     }
 }
 
