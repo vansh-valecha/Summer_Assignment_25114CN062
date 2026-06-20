@@ -57,7 +57,7 @@ int main()
     }
     else
     {
-        printf("addition not possible");
+        printf("subtraction not possible");
     }
     return 0;
 }
