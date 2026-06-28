@@ -1,0 +1,421 @@
+// Write a program to Create ticket booking system.
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+struct Trip
+{
+    int id;
+    char name[50];
+    char source[50];
+    char destination[50];
+    int totalSeats;
+    int availableSeats;
+    float fare;
+};
+
+struct Booking
+{
+    int bookingId;
+    int tripId;
+    char passengerName[50];
+    int seats;
+    float amount;
+    int isActive;
+};
+
+int findTrip(struct Trip *t, int tripCount, int id)
+{
+    int i;
+
+    for (i = 0; i < tripCount; i++)
+    {
+        if (t[i].id == id)
+        {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
+int findBooking(struct Booking *b, int bookingCount, int bookingId)
+{
+    int i;
+
+    for (i = 0; i < bookingCount; i++)
+    {
+        if (b[i].bookingId == bookingId)
+        {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
+void saveTrips(struct Trip *t, int tripCount)
+{
+    FILE *fp;
+
+    fp = fopen("ticket_trips.dat", "wb");
+
+    if (fp == NULL)
+    {
+        printf("Trip file not opened.\n");
+        return;
+    }
+
+    fwrite(&tripCount, sizeof(int), 1, fp);
+    fwrite(t, sizeof(struct Trip), tripCount, fp);
+
+    fclose(fp);
+}
+
+void saveBookings(struct Booking *b, int bookingCount)
+{
+    FILE *fp;
+
+    fp = fopen("ticket_bookings.dat", "wb");
+
+    if (fp == NULL)
+    {
+        printf("Booking file not opened.\n");
+        return;
+    }
+
+    fwrite(&bookingCount, sizeof(int), 1, fp);
+    fwrite(b, sizeof(struct Booking), bookingCount, fp);
+
+    fclose(fp);
+}
+
+void addDefaultTrips(struct Trip **t, int *tripCount, int *tripCapacity)
+{
+    *tripCount = 4;
+    *tripCapacity = 4;
+    *t = (struct Trip *)malloc((*tripCapacity) * sizeof(struct Trip));
+
+    (*t)[0].id = 101;
+    strcpy((*t)[0].name, "Morning Express");
+    strcpy((*t)[0].source, "Delhi");
+    strcpy((*t)[0].destination, "Jaipur");
+    (*t)[0].totalSeats = 40;
+    (*t)[0].availableSeats = 40;
+    (*t)[0].fare = 450.0;
+
+    (*t)[1].id = 102;
+    strcpy((*t)[1].name, "City Connect");
+    strcpy((*t)[1].source, "Mumbai");
+    strcpy((*t)[1].destination, "Pune");
+    (*t)[1].totalSeats = 35;
+    (*t)[1].availableSeats = 35;
+    (*t)[1].fare = 300.0;
+
+    (*t)[2].id = 103;
+    strcpy((*t)[2].name, "Night Rider");
+    strcpy((*t)[2].source, "Lucknow");
+    strcpy((*t)[2].destination, "Varanasi");
+    (*t)[2].totalSeats = 45;
+    (*t)[2].availableSeats = 45;
+    (*t)[2].fare = 550.0;
+
+    (*t)[3].id = 104;
+    strcpy((*t)[3].name, "Coastal Line");
+    strcpy((*t)[3].source, "Chennai");
+    strcpy((*t)[3].destination, "Bengaluru");
+    (*t)[3].totalSeats = 50;
+    (*t)[3].availableSeats = 50;
+    (*t)[3].fare = 650.0;
+
+    saveTrips(*t, *tripCount);
+}
+
+void loadTrips(struct Trip **t, int *tripCount, int *tripCapacity)
+{
+    FILE *fp;
+
+    fp = fopen("ticket_trips.dat", "rb");
+
+    if (fp == NULL)
+    {
+        addDefaultTrips(t, tripCount, tripCapacity);
+        return;
+    }
+
+    fread(tripCount, sizeof(int), 1, fp);
+
+    if (*tripCount == 0)
+    {
+        *tripCapacity = 4;
+    }
+    else
+    {
+        *tripCapacity = *tripCount;
+    }
+
+    *t = (struct Trip *)malloc((*tripCapacity) * sizeof(struct Trip));
+    fread(*t, sizeof(struct Trip), *tripCount, fp);
+
+    fclose(fp);
+}
+
+void loadBookings(struct Booking **b, int *bookingCount, int *bookingCapacity)
+{
+    FILE *fp;
+
+    fp = fopen("ticket_bookings.dat", "rb");
+
+    if (fp == NULL)
+    {
+        *bookingCount = 0;
+        *bookingCapacity = 2;
+        *b = (struct Booking *)malloc((*bookingCapacity) * sizeof(struct Booking));
+        return;
+    }
+
+    fread(bookingCount, sizeof(int), 1, fp);
+
+    if (*bookingCount == 0)
+    {
+        *bookingCapacity = 2;
+    }
+    else
+    {
+        *bookingCapacity = *bookingCount;
+    }
+
+    *b = (struct Booking *)malloc((*bookingCapacity) * sizeof(struct Booking));
+    fread(*b, sizeof(struct Booking), *bookingCount, fp);
+
+    fclose(fp);
+}
+
+int getNextBookingId(struct Booking *b, int bookingCount)
+{
+    int i, maxId = 1000;
+
+    for (i = 0; i < bookingCount; i++)
+    {
+        if (b[i].bookingId > maxId)
+        {
+            maxId = b[i].bookingId;
+        }
+    }
+
+    return maxId + 1;
+}
+
+void displayTrips(struct Trip *t, int tripCount)
+{
+    int i;
+
+    if (tripCount == 0)
+    {
+        printf("No trips available.\n");
+        return;
+    }
+
+    printf("\nID\tTrip Name\t\tFrom\t\tTo\t\tTotal\tAvailable\tFare\n");
+
+    for (i = 0; i < tripCount; i++)
+    {
+        printf("%d\t%-18s\t%-10s\t%-10s\t%d\t%d\t\t%.2f\n",
+               t[i].id,
+               t[i].name,
+               t[i].source,
+               t[i].destination,
+               t[i].totalSeats,
+               t[i].availableSeats,
+               t[i].fare);
+    }
+}
+
+void displayBooking(struct Booking booking, struct Trip *t, int tripCount)
+{
+    int tripIndex;
+
+    tripIndex = findTrip(t, tripCount, booking.tripId);
+
+    printf("\nBooking ID: %d\n", booking.bookingId);
+    printf("Passenger name: %s\n", booking.passengerName);
+    printf("Trip ID: %d\n", booking.tripId);
+
+    if (tripIndex != -1)
+    {
+        printf("Trip: %s (%s to %s)\n",
+               t[tripIndex].name,
+               t[tripIndex].source,
+               t[tripIndex].destination);
+    }
+
+    printf("Seats booked: %d\n", booking.seats);
+    printf("Total amount: %.2f\n", booking.amount);
+    printf("Status: %s\n", booking.isActive ? "Booked" : "Cancelled");
+}
+
+int main()
+{
+    struct Trip *t;
+    struct Booking *b;
+    int tripCount = 0, tripCapacity = 0;
+    int bookingCount = 0, bookingCapacity = 0;
+    int choice, tripId, tripIndex, bookingId, bookingIndex, seats, i;
+
+    loadTrips(&t, &tripCount, &tripCapacity);
+    loadBookings(&b, &bookingCount, &bookingCapacity);
+
+    do
+    {
+        printf("\n===== Ticket Booking System =====\n");
+        printf("1. Display Available Trips\n");
+        printf("2. Book Ticket\n");
+        printf("3. Display All Bookings\n");
+        printf("4. Search Booking\n");
+        printf("5. Cancel Booking\n");
+        printf("6. Exit\n");
+
+        printf("Enter your choice: ");
+        scanf("%d", &choice);
+
+        switch (choice)
+        {
+        case 1:
+            displayTrips(t, tripCount);
+            break;
+
+        case 2:
+            displayTrips(t, tripCount);
+
+            printf("\nEnter trip ID: ");
+            scanf("%d", &tripId);
+
+            tripIndex = findTrip(t, tripCount, tripId);
+
+            if (tripIndex == -1)
+            {
+                printf("Trip not found.\n");
+            }
+            else
+            {
+                if (bookingCount == bookingCapacity)
+                {
+                    bookingCapacity = bookingCapacity * 2;
+                    b = (struct Booking *)realloc(b, bookingCapacity * sizeof(struct Booking));
+                }
+
+                printf("Enter passenger name: ");
+                scanf(" %[^\n]", b[bookingCount].passengerName);
+
+                printf("Enter number of seats: ");
+                scanf("%d", &seats);
+
+                if (seats <= 0)
+                {
+                    printf("Seats must be greater than zero.\n");
+                }
+                else if (seats > t[tripIndex].availableSeats)
+                {
+                    printf("Only %d seats are available.\n", t[tripIndex].availableSeats);
+                }
+                else
+                {
+                    b[bookingCount].bookingId = getNextBookingId(b, bookingCount);
+                    b[bookingCount].tripId = tripId;
+                    b[bookingCount].seats = seats;
+                    b[bookingCount].amount = seats * t[tripIndex].fare;
+                    b[bookingCount].isActive = 1;
+
+                    t[tripIndex].availableSeats = t[tripIndex].availableSeats - seats;
+                    bookingCount++;
+
+                    saveTrips(t, tripCount);
+                    saveBookings(b, bookingCount);
+
+                    printf("Ticket booked successfully.\n");
+                    printf("Your booking ID is %d.\n", b[bookingCount - 1].bookingId);
+                    printf("Total amount: %.2f\n", b[bookingCount - 1].amount);
+                }
+            }
+            break;
+
+        case 3:
+            if (bookingCount == 0)
+            {
+                printf("No booking records found.\n");
+            }
+            else
+            {
+                for (i = 0; i < bookingCount; i++)
+                {
+                    displayBooking(b[i], t, tripCount);
+                }
+            }
+            break;
+
+        case 4:
+            printf("Enter booking ID to search: ");
+            scanf("%d", &bookingId);
+
+            bookingIndex = findBooking(b, bookingCount, bookingId);
+
+            if (bookingIndex == -1)
+            {
+                printf("Booking not found.\n");
+            }
+            else
+            {
+                displayBooking(b[bookingIndex], t, tripCount);
+            }
+            break;
+
+        case 5:
+            printf("Enter booking ID to cancel: ");
+            scanf("%d", &bookingId);
+
+            bookingIndex = findBooking(b, bookingCount, bookingId);
+
+            if (bookingIndex == -1)
+            {
+                printf("Booking not found.\n");
+            }
+            else if (b[bookingIndex].isActive == 0)
+            {
+                printf("Booking is already cancelled.\n");
+            }
+            else
+            {
+                tripIndex = findTrip(t, tripCount, b[bookingIndex].tripId);
+
+                if (tripIndex != -1)
+                {
+                    t[tripIndex].availableSeats = t[tripIndex].availableSeats + b[bookingIndex].seats;
+                }
+
+                b[bookingIndex].isActive = 0;
+
+                saveTrips(t, tripCount);
+                saveBookings(b, bookingCount);
+
+                printf("Booking cancelled successfully.\n");
+            }
+            break;
+
+        case 6:
+            saveTrips(t, tripCount);
+            saveBookings(b, bookingCount);
+            printf("Thank you for using Ticket Booking System.\n");
+            break;
+
+        default:
+            printf("Invalid choice.\n");
+        }
+
+    } while (choice != 6);
+
+    free(t);
+    free(b);
+
+    return 0;
+}
